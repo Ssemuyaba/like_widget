@@ -10,6 +10,10 @@ app.config.from_object("config.Config")  # make sure your Config has SQLALCHEMY_
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 db = SQLAlchemy(app)
 socketio = SocketIO(app, cors_allowed_origins="*")  # real-time updates
+#-----Reflect-------
+
+# Allow only your blog to access the API
+CORS(app, origins=["https://www.reflectdc.org"])
 
 # ----------------- MODELS -----------------
 class Tenant(db.Model):
@@ -184,3 +188,4 @@ def health():
 # ----------------- RUN -----------------
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
+
