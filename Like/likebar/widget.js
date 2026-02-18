@@ -1,19 +1,14 @@
 (function () {
   const script = document.currentScript;
-  const API = script.getAttribute("data-api");
   const TENANT_ID = script.getAttribute("data-tenant-id") || null;
 
-  if (!API) {
-    console.error("LikeBar: Missing API URL");
-    return;
-  }
-
-  // select all lite-likebar divs
-  const containers = document.querySelectorAll(".lite-likebar, [id='lite-likebar']");
+  const containers = document.querySelectorAll(".lite-likebar");
   containers.forEach(container => {
     const pageKey = container.getAttribute("data-page-key");
-    if (!pageKey) {
-      console.error("LikeBar: Missing data-page-key for container", container);
+    const API = container.getAttribute("data-api");
+
+    if (!pageKey || !API) {
+      console.error("LikeBar: Missing page key or API URL");
       return;
     }
 
@@ -36,6 +31,7 @@
       </div>
     `;
 
+    // Find elements within this container
     const likeBtn = container.querySelector(".lb-like");
     const countEl = container.querySelector(".lb-count");
     const commentCountEl = container.querySelector(".lb-comment-count");
@@ -59,7 +55,8 @@
       fetch(`${API}/api/page/${encodeURIComponent(pageKey)}`, { headers: headers() })
         .then(r => r.json())
         .then(data => {
-          countEl.textContent = parseInt(data.likes ?? 0, 10);
+          const rawLikes = data.likes ?? data.total_likes ?? 0;
+          countEl.textContent = parseInt(rawLikes, 10) || 0;
 
           const comments = data.comments || [];
           updateCommentCount(comments.length);
@@ -68,16 +65,13 @@
           comments.forEach(c => {
             const wrap = document.createElement("div");
             wrap.className = "lb-comment";
-
-            const nameEl = document.createElement("div");
-            nameEl.className = "lb-name";
-            nameEl.textContent = c.name;
-
-            const textEl = document.createElement("div");
-            textEl.textContent = c.comment;
-
-            wrap.appendChild(nameEl);
-            wrap.appendChild(textEl);
+            const name = document.createElement("div");
+            name.className = "lb-name";
+            name.textContent = c.name;
+            const text = document.createElement("div");
+            text.textContent = c.comment;
+            wrap.appendChild(name);
+            wrap.appendChild(text);
             list.appendChild(wrap);
           });
         })
@@ -87,25 +81,25 @@
     load();
     setInterval(load, 5000);
 
+    // LIKE
     likeBtn.onclick = () => {
       if (likeBtn.disabled) return;
-
       likeBtn.classList.add("pop");
       setTimeout(() => likeBtn.classList.remove("pop"), 300);
-
       fetch(`${API}/api/like`, {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({ page_key: pageKey })
       })
-        .then(r => r.json())
-        .then(data => {
-          countEl.textContent = parseInt(data.likes ?? 0, 10);
-          localStorage.setItem(likedKey, "1");
-          likeBtn.disabled = true;
-        });
+      .then(r => r.json())
+      .then(data => {
+        countEl.textContent = parseInt(data.likes ?? 0, 10) || 0;
+        localStorage.setItem(likedKey, "1");
+        likeBtn.disabled = true;
+      });
     };
 
+    // COMMENT
     container.querySelector(".lb-send").onclick = () => {
       const text = container.querySelector(".lb-text").value.trim();
       if (!text) return;
@@ -117,33 +111,29 @@
         headers: headers(),
         body: JSON.stringify({ page_key: pageKey, name: typedName, comment: text })
       })
-        .then(r => r.json())
-        .then(data => {
-          container.querySelector(".lb-text").value = "";
+      .then(r => r.json())
+      .then(data => {
+        container.querySelector(".lb-text").value = "";
+        const commentName = data.name || typedName || "User";
 
-          const commentName = data.name || typedName || "User";
+        const wrap = document.createElement("div");
+        wrap.className = "lb-comment";
+        const nameEl = document.createElement("div");
+        nameEl.className = "lb-name";
+        nameEl.textContent = commentName;
+        const textEl = document.createElement("div");
+        textEl.textContent = text;
+        wrap.appendChild(nameEl);
+        wrap.appendChild(textEl);
+        list.prepend(wrap);
 
-          const wrap = document.createElement("div");
-          wrap.className = "lb-comment";
-
-          const nameEl = document.createElement("div");
-          nameEl.className = "lb-name";
-          nameEl.textContent = commentName;
-
-          const textEl = document.createElement("div");
-          textEl.textContent = text;
-
-          wrap.appendChild(nameEl);
-          wrap.appendChild(textEl);
-
-          list.prepend(wrap);
-          updateCommentCount(list.children.length);
-
-          list.classList.add("open");
-          toggleBtn.classList.add("open");
-        });
+        updateCommentCount(list.children.length);
+        list.classList.add("open");
+        toggleBtn.classList.add("open");
+      });
     };
 
+    // TOGGLE
     toggleBtn.onclick = () => {
       list.classList.toggle("open");
       toggleBtn.classList.toggle("open");
