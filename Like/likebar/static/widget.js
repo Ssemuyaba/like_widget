@@ -1,4 +1,5 @@
 // Lite Like Widget - Polished Version with Global Like Limit
+
 (function () {
   document.addEventListener("DOMContentLoaded", () => {
     const containers = document.querySelectorAll(".lite-likebar");
