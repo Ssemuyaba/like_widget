@@ -1,4 +1,4 @@
-// Lite Like Widget - Polished Version
+// Lite Like Widget - Polished Version with Global Like Limit
 (function () {
   document.addEventListener("DOMContentLoaded", () => {
     const containers = document.querySelectorAll(".lite-likebar");
@@ -123,7 +123,6 @@
       if (localStorage.getItem(likedKey)) likeBtn.disabled = true;
 
       const headers = () => ({ "Content-Type": "application/json" });
-
       const updateCommentCount = (count) => { commentCountEl.textContent = `💬 ${count}`; };
 
       // Initialize page in DB then load data
@@ -159,6 +158,12 @@
               wrap.appendChild(text);
               list.appendChild(wrap);
             });
+
+            // Global like limit feedback
+            if (data.error && data.error.includes("total like limit")) {
+              likeBtn.disabled = true;
+              likeBtn.title = "You have reached your total like limit!";
+            }
           })
           .catch(err => console.error("LikeWidget load failed:", err));
       };
@@ -179,6 +184,12 @@
         })
         .then(r => r.json())
         .then(data => {
+          if (data.error && data.error.includes("total like limit")) {
+            likeBtn.disabled = true;
+            likeBtn.title = "You have reached your like limit!";
+            return;
+          }
+
           countEl.textContent = parseInt(data.likes ?? 0, 10) || 0;
           localStorage.setItem(likedKey, "1");
           likeBtn.disabled = true;
