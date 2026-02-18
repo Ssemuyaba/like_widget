@@ -10,13 +10,17 @@ from flask import send_from_directory
 # ----------------- APP SETUP ----------------
 app = Flask(__name__)
 app.config.from_object("config.Config")  # make sure your Config has SQLALCHEMY_DATABASE_URI
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={
+    r"/api/*": {"origins": ["https://www.reflectdc.org"]},
+    r"/widget.js": {"origins": "*"}
+})
+
 db = SQLAlchemy(app)
 socketio = SocketIO(app, cors_allowed_origins="*")  # real-time updates
 #-----Reflect-------
 
 # Allow only your blog to access the API
-CORS(app, origins=["https://www.reflectdc.org"])
+
 
 # ----------------- MODELS -----------------
 class Tenant(db.Model):
@@ -196,5 +200,6 @@ def health():
 # ----------------- RUN -----------------
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
+
 
 
