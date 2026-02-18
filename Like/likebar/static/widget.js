@@ -1,96 +1,8 @@
-
-<style>
-/* Horizontal Instagram-style Lite-Like */
-.lite-likebar .lb-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: #fff;
-  font-family: sans-serif;
-}
-
-.lite-likebar .lb-like-group,
-.lite-likebar .lb-comment-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.lite-likebar .lb-like {
-  font-size: 1.4rem;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.lite-likebar .lb-like.pop {
-  transform: scale(1.4);
-}
-
-.lite-likebar .lb-count {
-  font-weight: 600;
-  color: #333;
-}
-
-.lite-likebar .lb-comment-count {
-  font-weight: 500;
-  color: #555;
-}
-
-/* Hide input/textarea by default, show only when toggled */
-.lite-likebar .lb-name,
-.lite-likebar .lb-text,
-.lite-likebar .lb-send {
-  display: none;
-}
-
-/* Toggle button style */
-.lite-likebar .lb-toggle {
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: transform 0.2s ease;
-}
-
-.lite-likebar .lb-toggle.open {
-  transform: rotate(180deg);
-}
-
-/* Comments list */
-.lite-likebar .lb-list {
-  display: none;
-  flex-direction: column;
-  margin-top: 8px;
-  gap: 4px;
-}
-
-.lite-likebar .lb-list.open {
-  display: flex;
-}
-
-.lite-likebar .lb-comment {
-  background: #f3f3f3;
-  padding: 4px 6px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.lite-likebar .lb-comment .lb-name {
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-</style>
-
-
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  (function () {
-    const script = document.currentScript;
-    const TENANT_ID = script?.getAttribute("data-tenant-id") || null;
-
+// Lite Like Widget - Ready for Blog
+(function () {
+  document.addEventListener("DOMContentLoaded", () => {
     const containers = document.querySelectorAll(".lite-likebar");
+
     containers.forEach(container => {
       const pageKey = container.getAttribute("data-page-key");
       const API = container.getAttribute("data-api");
@@ -100,7 +12,30 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Render initial widget HTML
       container.innerHTML = `
+        <style>
+          .lite-likebar .lb-wrapper {
+            display: flex; align-items: center; gap: 16px;
+            padding: 6px 10px; border: 1px solid #ddd;
+            border-radius: 10px; background: #fff;
+            font-family: sans-serif;
+          }
+          .lite-likebar .lb-like-group,
+          .lite-likebar .lb-comment-group { display: flex; align-items: center; gap: 6px; }
+          .lite-likebar .lb-like { font-size: 1.4rem; cursor: pointer; transition: transform 0.2s ease; }
+          .lite-likebar .lb-like.pop { transform: scale(1.4); }
+          .lite-likebar .lb-count { font-weight: 600; color: #333; }
+          .lite-likebar .lb-comment-count { font-weight: 500; color: #555; }
+          .lite-likebar .lb-name, .lite-likebar .lb-text, .lite-likebar .lb-send { display: none; }
+          .lite-likebar .lb-toggle { cursor: pointer; font-size: 0.9rem; transition: transform 0.2s ease; }
+          .lite-likebar .lb-toggle.open { transform: rotate(180deg); }
+          .lite-likebar .lb-list { display: none; flex-direction: column; margin-top: 8px; gap: 4px; }
+          .lite-likebar .lb-list.open { display: flex; }
+          .lite-likebar .lb-comment { background: #f3f3f3; padding: 4px 6px; border-radius: 6px; font-size: 0.9rem; }
+          .lite-likebar .lb-comment .lb-name { font-weight: 600; margin-bottom: 2px; }
+        </style>
+
         <div class="lb-wrapper">
           <div class="lb-like-group">
             <button class="lb-like" aria-label="Like">❤️</button>
@@ -108,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div class="lb-comment-group">
             <span class="lb-comment-count">💬 0</span>
-            <button class="lb-toggle" title="Toggle comments">&#9660;</button>
+            <button class="lb-toggle">&#9660;</button>
           </div>
           <input class="lb-name" placeholder="Your name (optional)" />
           <textarea class="lb-text" placeholder="Write a comment..."></textarea>
@@ -126,27 +61,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (localStorage.getItem(likedKey)) likeBtn.disabled = true;
 
-      function headers() {
-        const h = { "Content-Type": "application/json" };
-        if (TENANT_ID) h["X-Tenant-ID"] = TENANT_ID;
-        return h;
-      }
+      const headers = () => ({ "Content-Type": "application/json" });
 
-      function updateCommentCount(count) {
-        commentCountEl.textContent = `💬 ${count}`;
-      }
+      const updateCommentCount = (count) => { commentCountEl.textContent = `💬 ${count}`; };
 
-      function load() {
+      // Load page data
+      const load = () => {
         fetch(`${API}/api/page/${encodeURIComponent(pageKey)}`, { headers: headers() })
           .then(r => r.json())
           .then(data => {
-            const rawLikes = data.likes ?? data.total_likes ?? 0;
-            countEl.textContent = parseInt(rawLikes, 10) || 0;
+            countEl.textContent = parseInt(data.likes ?? 0, 10) || 0;
 
+            list.innerHTML = "";
             const comments = data.comments || [];
             updateCommentCount(comments.length);
 
-            list.innerHTML = "";
             comments.forEach(c => {
               const wrap = document.createElement("div");
               wrap.className = "lb-comment";
@@ -163,12 +92,13 @@ document.addEventListener("DOMContentLoaded", () => {
               list.appendChild(wrap);
             });
           })
-          .catch(err => console.error("Failed to load page data:", err));
-      }
+          .catch(err => console.error("LikeWidget load failed:", err));
+      };
 
       load();
       setInterval(load, 5000);
 
+      // Like button
       likeBtn.onclick = () => {
         if (likeBtn.disabled) return;
         likeBtn.classList.add("pop");
@@ -187,10 +117,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       };
 
+      // Send comment
       container.querySelector(".lb-send").onclick = () => {
         const text = container.querySelector(".lb-text").value.trim();
         if (!text) return;
-
         const typedName = container.querySelector(".lb-name").value.trim();
 
         fetch(`${API}/api/comment`, {
@@ -223,19 +153,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       };
 
+      // Toggle comments
       toggleBtn.onclick = () => {
-        list.classList.toggle("open");
-        toggleBtn.classList.toggle("open");
-
-        // Show/hide input and send when comments open
-        const show = list.classList.contains("open");
+        const show = !list.classList.contains("open");
+        list.classList.toggle("open", show);
+        toggleBtn.classList.toggle("open", show);
         container.querySelector(".lb-name").style.display = show ? "inline-block" : "none";
         container.querySelector(".lb-text").style.display = show ? "inline-block" : "none";
         container.querySelector(".lb-send").style.display = show ? "inline-block" : "none";
       };
-
     });
-  })();
-});
-</script>
-
+  });
+})();
