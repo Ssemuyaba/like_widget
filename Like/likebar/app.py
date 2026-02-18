@@ -135,16 +135,30 @@ def like():
     if not page:
         return jsonify({"error": "Page not initialized"}), 400
 
+    # ------------------ GLOBAL LIKE LIMIT ------------------
+    # Count total likes by this user
+    user_like_count = Like.query.filter_by(ip_hash=ip_hash).count()
+    total_blogs = Page.query.count()
+    if user_like_count >= total_blogs:
+        return jsonify({"error": "You have reached your total like limit!"}), 403
+    # -------------------------------------------------------
+
+    # ------------------ PER-BLOG LIKE CHECK ----------------
     if Like.query.filter_by(page_id=page.id, ip_hash=ip_hash).first():
         return jsonify({"likes": page.likes_count})
+    # -------------------------------------------------------
 
+    # Add like
     like_obj = Like(page_id=page.id, ip_hash=ip_hash)
     page.likes_count += 1
     db.session.add(like_obj)
     db.session.commit()
 
+    # SocketIO live update
     socketio.emit("like_update", {"likes": page.likes_count}, room=page.page_key)
+
     return jsonify({"likes": page.likes_count})
+
 
 
 @app.route("/api/comment", methods=["POST"])
@@ -200,6 +214,7 @@ def health():
 # ----------------- RUN -----------------
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
+
 
 
 
