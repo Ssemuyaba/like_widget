@@ -66,6 +66,15 @@
       const updateCommentCount = (count) => { commentCountEl.textContent = `💬 ${count}`; };
 
       // Load page data
+      // Add this at the start of the widget.js load
+       fetch(`${API}/api/page/init`, {
+           method: "POST",
+              headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ page_key: pageKey })
+                          })
+                        .then(() => load())
+                .catch(err => console.error("Init page failed:", err));
+
       const load = () => {
         fetch(`${API}/api/page/${encodeURIComponent(pageKey)}`, { headers: headers() })
           .then(r => r.json())
