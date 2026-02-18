@@ -82,7 +82,7 @@
 }
 </style>
 
-<div class="lite-likebar" data-page-key="demo-page" data-api="https://your-api.com"></div>
+<div class="lite-likebar" data-page-key="demo-page" data-api=""></div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
