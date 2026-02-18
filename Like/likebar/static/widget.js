@@ -1,4 +1,4 @@
-// Lite Like Widget - Ready for Blog
+// Lite Like Widget - Polished Version
 (function () {
   document.addEventListener("DOMContentLoaded", () => {
     const containers = document.querySelectorAll(".lite-likebar");
@@ -12,28 +12,89 @@
         return;
       }
 
-      // Render initial widget HTML
+      // Render widget HTML + CSS
       container.innerHTML = `
         <style>
           .lite-likebar .lb-wrapper {
-            display: flex; align-items: center; gap: 16px;
-            padding: 6px 10px; border: 1px solid #ddd;
-            border-radius: 10px; background: #fff;
-            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+            flex-wrap: wrap;
           }
           .lite-likebar .lb-like-group,
           .lite-likebar .lb-comment-group { display: flex; align-items: center; gap: 6px; }
-          .lite-likebar .lb-like { font-size: 1.4rem; cursor: pointer; transition: transform 0.2s ease; }
-          .lite-likebar .lb-like.pop { transform: scale(1.4); }
-          .lite-likebar .lb-count { font-weight: 600; color: #333; }
-          .lite-likebar .lb-comment-count { font-weight: 500; color: #555; }
-          .lite-likebar .lb-name, .lite-likebar .lb-text, .lite-likebar .lb-send { display: none; }
-          .lite-likebar .lb-toggle { cursor: pointer; font-size: 0.9rem; transition: transform 0.2s ease; }
+          .lite-likebar .lb-like {
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px;
+            transition: transform 0.2s ease;
+          }
+          .lite-likebar .lb-like.pop { transform: scale(1.5); }
+          .lite-likebar .lb-count { font-weight: 600; color: #e74c3c; }
+          .lite-likebar .lb-comment-count { font-weight: 500; color: #3498db; }
+          .lite-likebar .lb-toggle {
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            border: none;
+            background: none;
+          }
           .lite-likebar .lb-toggle.open { transform: rotate(180deg); }
-          .lite-likebar .lb-list { display: none; flex-direction: column; margin-top: 8px; gap: 4px; }
+          .lite-likebar .lb-name, 
+          .lite-likebar .lb-text, 
+          .lite-likebar .lb-send {
+            display: none;
+            margin-top: 4px;
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.9rem;
+          }
+          .lite-likebar .lb-send {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+          }
+          .lite-likebar .lb-send:hover { background: #2980b9; }
+          .lite-likebar .lb-list {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            margin-top: 6px;
+            gap: 4px;
+          }
           .lite-likebar .lb-list.open { display: flex; }
-          .lite-likebar .lb-comment { background: #f3f3f3; padding: 4px 6px; border-radius: 6px; font-size: 0.9rem; }
-          .lite-likebar .lb-comment .lb-name { font-weight: 600; margin-bottom: 2px; }
+          .lite-likebar .lb-comment {
+            background: #f9f9f9;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+          }
+          .lite-likebar .lb-comment .lb-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: #2c3e50;
+          }
+          @media (max-width: 600px) {
+            .lite-likebar .lb-wrapper {
+              flex-direction: column;
+              align-items: flex-start;
+            }
+            .lite-likebar .lb-like-group,
+            .lite-likebar .lb-comment-group {
+              gap: 10px;
+            }
+          }
         </style>
 
         <div class="lb-wrapper">
@@ -65,22 +126,20 @@
 
       const updateCommentCount = (count) => { commentCountEl.textContent = `💬 ${count}`; };
 
-      // Load page data
-      // Add this at the start of the widget.js load
-       fetch(`${API}/api/page/init`, {
-           method: "POST",
-              headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ page_key: pageKey })
-                          })
-                        .then(() => load())
-                .catch(err => console.error("Init page failed:", err));
+      // Initialize page in DB then load data
+      fetch(`${API}/api/page/init`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ page_key: pageKey })
+      })
+      .then(() => load())
+      .catch(err => console.error("Init page failed:", err));
 
       const load = () => {
         fetch(`${API}/api/page/${encodeURIComponent(pageKey)}`, { headers: headers() })
           .then(r => r.json())
           .then(data => {
             countEl.textContent = parseInt(data.likes ?? 0, 10) || 0;
-
             list.innerHTML = "";
             const comments = data.comments || [];
             updateCommentCount(comments.length);
@@ -167,9 +226,15 @@
         const show = !list.classList.contains("open");
         list.classList.toggle("open", show);
         toggleBtn.classList.toggle("open", show);
-        container.querySelector(".lb-name").style.display = show ? "inline-block" : "none";
-        container.querySelector(".lb-text").style.display = show ? "inline-block" : "none";
-        container.querySelector(".lb-send").style.display = show ? "inline-block" : "none";
+
+        const nameInput = container.querySelector(".lb-name");
+        const textInput = container.querySelector(".lb-text");
+        const sendBtn = container.querySelector(".lb-send");
+
+        [nameInput, textInput, sendBtn].forEach(el => {
+          el.style.display = show ? "inline-block" : "none";
+          el.style.width = "calc(100% - 12px)";
+        });
       };
     });
   });
