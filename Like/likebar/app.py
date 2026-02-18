@@ -3,6 +3,9 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, join_room, emit
 import hashlib, os, time
+from flask import send_from_directory
+
+
 
 # ----------------- APP SETUP ----------------
 app = Flask(__name__)
@@ -79,6 +82,11 @@ def is_limited(ip, limit=10, window=60):
     return False
 
 # ----------------- ROUTES -----------------
+
+@app.route("/widget.js")
+def serve_widget():
+    return send_from_directory(os.path.join(app.root_path, "static"), "widget.js")
+
 @app.route("/api/page/init", methods=["POST"])
 def init_page():
     page_key = request.json.get("page_key")
@@ -188,4 +196,5 @@ def health():
 # ----------------- RUN -----------------
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
+
 
