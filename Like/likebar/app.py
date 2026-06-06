@@ -11,7 +11,7 @@ from flask import send_from_directory
 app = Flask(__name__)
 app.config.from_object("config.Config")  # make sure your Config has SQLALCHEMY_DATABASE_URI
 CORS(app, resources={
-    r"/api/*": {"origins": ["https://www.reflectdc.org"]},
+    r"/api/*": {"origins": ["https://reflectdc.org","https://www.reflectdc.org"]},
     r"/widget.js": {"origins": "*"}
 })
 
